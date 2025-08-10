@@ -26,6 +26,11 @@ make run-slurm
 
 If no GPU is available the script prints a friendly message and exits.
 
+## Configuration
+
+- `DATA_PATH` – dataset download path for training scripts (default `/tmp/data`)
+- `SIGTERM_TIMEOUT` – seconds the launcher waits after SIGTERM before forcing termination
+
 ## NCCL tuning cheat sheet
 
 - `NCCL_SOCKET_IFNAME` – network interface (e.g., `eth0`)

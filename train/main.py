@@ -30,6 +30,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--epochs", type=int, default=1)
     parser.add_argument("--batch-size", type=int, default=32)
     parser.add_argument("--mixed-precision", action="store_true")
+    parser.add_argument(
+        "--data-path",
+        default=os.environ.get("DATA_PATH", "/tmp/data"),
+        help="Dataset path (env: DATA_PATH)",
+    )
     return parser.parse_args()
 
 
@@ -47,7 +52,7 @@ def main() -> None:
     criterion = nn.CrossEntropyLoss().to(device)
     scaler = torch.cuda.amp.GradScaler(enabled=args.mixed_precision)
 
-    dataset_obj = dataset.get_dataset()
+    dataset_obj = dataset.get_dataset(args.data_path)
     sampler = DistributedSampler(dataset_obj)
     loader = DataLoader(dataset_obj, batch_size=args.batch_size, sampler=sampler)
 

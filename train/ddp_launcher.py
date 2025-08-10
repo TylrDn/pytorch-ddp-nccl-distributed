@@ -68,10 +68,12 @@ def main() -> None:
         for idx, p in enumerate(processes):
             if p.poll() is None:
                 logging.warning(
-                    "Process %s did not terminate after SIGTERM, sending SIGKILL",
+                    "Process %s (pid %s) did not terminate after SIGTERM, sending SIGKILL",
                     idx,
+                    p.pid,
                 )
                 p.kill()
+                p.wait()
 
     signal.signal(signal.SIGTERM, handle_sigterm)
 

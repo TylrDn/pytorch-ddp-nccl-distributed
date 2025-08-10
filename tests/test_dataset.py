@@ -19,9 +19,11 @@ def test_dataset_env_path(tmp_path, monkeypatch):
     assert labels.shape == (4,)
 
 
-def test_dataset_explicit_path(tmp_path, monkeypatch):
+def test_dataset_explicit_path(tmp_path, monkeypatch, caplog):
     monkeypatch.setattr(dataset, "HAS_TORCHVISION", False)
-    loader = dataset.get_dataloader(batch_size=2, data_path=str(tmp_path))
+    with caplog.at_level("INFO"):
+        loader = dataset.get_dataloader(batch_size=2, data_path=str(tmp_path))
+    assert f"Resolved data_path: {tmp_path}" in caplog.text
     images, labels = next(iter(loader))
     assert images.shape == (2, 3, 32, 32)
     assert labels.shape == (2,)

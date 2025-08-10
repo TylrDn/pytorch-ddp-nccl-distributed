@@ -41,7 +41,7 @@ def get_dataset(data_path: str | None = None) -> Dataset:
 
     if data_path is None:
         data_path = os.environ.get("DATA_PATH", "/tmp/data")
-        logging.info("Resolved data_path: %s", data_path)
+    logging.info("Resolved data_path: %s", data_path)
 
     if HAS_TORCHVISION:
         transform = transforms.ToTensor()

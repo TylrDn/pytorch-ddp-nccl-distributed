@@ -51,7 +51,7 @@ def main() -> None:
 
     processes: list[subprocess.Popen] = []
 
-    def handle_sigterm(signum, frame):  # noqa: ARG001
+    def handle_shutdown(signum, frame):  # noqa: ARG001
         for p in processes:
             p.send_signal(signum)
 
@@ -68,14 +68,21 @@ def main() -> None:
         for idx, p in enumerate(processes):
             if p.poll() is None:
                 logging.warning(
-                    "Process %s (pid %s) did not terminate after SIGTERM, sending SIGKILL",
+                    "Process %s (pid %s) did not terminate after %s, sending SIGKILL",
                     idx,
                     p.pid,
+                    signal.Signals(signum).name,
                 )
                 p.kill()
-                p.wait()
+                try:
+                    p.wait(timeout=1)
+                except subprocess.TimeoutExpired:
+                    logging.error(
+                        "Process %s (pid %s) ignored SIGKILL", idx, p.pid
+                    )
 
-    signal.signal(signal.SIGTERM, handle_sigterm)
+    signal.signal(signal.SIGTERM, handle_shutdown)
+    signal.signal(signal.SIGINT, handle_shutdown)
 
     n_procs = n_gpus if n_gpus > 0 else world_size
     for local_rank in range(n_procs):

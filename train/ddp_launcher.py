@@ -1,4 +1,5 @@
 import argparse
+import logging
 import os
 import signal
 import socket
@@ -64,9 +65,13 @@ def main() -> None:
             except subprocess.TimeoutExpired:
                 pass
 
-        for p in processes:
+        for idx, p in enumerate(processes):
             if p.poll() is None:
-                p.terminate()
+                logging.warning(
+                    "Process %s did not terminate after SIGTERM, sending SIGKILL",
+                    idx,
+                )
+                p.kill()
 
     signal.signal(signal.SIGTERM, handle_sigterm)
 

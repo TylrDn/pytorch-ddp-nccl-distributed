@@ -1,0 +1,32 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: ddp-train
+spec:
+  completionMode: Indexed
+  completions: 2
+  parallelism: 2
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: trainer
+          image: ghcr.io/your-org/ddp-train:latest
+          envFrom:
+            - configMapRef:
+                name: nccl-env
+          env:
+            - name: MASTER_ADDR
+              value: ddp-train-0
+            - name: MASTER_PORT
+              value: "29500"
+            - name: WORLD_SIZE
+              value: "2"
+            - name: RANK
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.annotations['batch.kubernetes.io/job-completion-index']
+          resources:
+            limits:
+              nvidia.com/gpu: 1
+          command: ["python", "train/ddp_launcher.py", "train/main.py"]

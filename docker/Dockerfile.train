@@ -1,0 +1,19 @@
+FROM nvidia/cuda:12.1.1-cudnn8-devel-ubuntu22.04
+
+ARG USER=trainer
+ARG UID=1000
+ARG GID=1000
+
+RUN apt-get update && apt-get install -y python3 python3-pip git && rm -rf /var/lib/apt/lists/*
+RUN pip3 install --no-cache-dir torch==2.1.0 torchvision==0.16.0
+
+ENV NCCL_DEBUG=INFO \
+    PYTHONUNBUFFERED=1
+
+RUN groupadd -g ${GID} ${USER} && useradd -m -u ${UID} -g ${GID} ${USER}
+WORKDIR /workspace
+COPY . /workspace
+RUN chown -R ${UID}:${GID} /workspace
+USER ${USER}
+
+CMD ["python", "train/ddp_launcher.py", "train/main.py"]

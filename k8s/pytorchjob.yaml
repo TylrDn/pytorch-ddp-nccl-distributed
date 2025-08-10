@@ -1,0 +1,37 @@
+# Example Kubeflow PyTorchJob manifest (optional)
+# apiVersion: kubeflow.org/v1
+# kind: PyTorchJob
+# metadata:
+#   name: ddp-train
+# spec:
+#   pytorchReplicaSpecs:
+#     Master:
+#       replicas: 1
+#       restartPolicy: OnFailure
+#       template:
+#         spec:
+#           containers:
+#             - name: pytorch
+#               image: ghcr.io/your-org/ddp-train:latest
+#               envFrom:
+#                 - configMapRef:
+#                     name: nccl-env
+#               resources:
+#                 limits:
+#                   nvidia.com/gpu: 1
+#               command: ["python", "train/ddp_launcher.py", "train/main.py"]
+#     Worker:
+#       replicas: 1
+#       restartPolicy: OnFailure
+#       template:
+#         spec:
+#           containers:
+#             - name: pytorch
+#               image: ghcr.io/your-org/ddp-train:latest
+#               envFrom:
+#                 - configMapRef:
+#                     name: nccl-env
+#               resources:
+#                 limits:
+#                   nvidia.com/gpu: 1
+#               command: ["python", "train/ddp_launcher.py", "train/main.py"]

@@ -67,9 +67,13 @@ def main() -> None:
         dist.barrier()
         epoch_time = time.time() - epoch_start
         num_images = len(loader.dataset)
+        world_size = dist.get_world_size()
         if dist.get_rank() == 0:
-            throughput = num_images / epoch_time
-            print(f"Epoch {epoch} | {throughput:.2f} img/s | {epoch_time:.2f}s")
+            global_num_images = num_images * world_size
+            throughput = global_num_images / epoch_time
+            print(
+                f"Epoch {epoch} | Global throughput: {throughput:.2f} img/s | {epoch_time:.2f}s"
+            )
     dist.destroy_process_group()
 
 

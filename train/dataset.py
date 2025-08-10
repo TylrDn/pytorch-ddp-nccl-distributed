@@ -25,12 +25,12 @@ class RandomDataset(Dataset):
         return x, y
 
 
-def get_dataset() -> Dataset:
+def get_dataset(data_path: str = "/tmp/data") -> Dataset:
     if HAS_TORCHVISION:
         transform = transforms.ToTensor()
-        return datasets.CIFAR10(root="/tmp/data", train=True, download=True, transform=transform)
+        return datasets.CIFAR10(root=data_path, train=True, download=True, transform=transform)
     return RandomDataset()
 
 
-def get_dataloader(batch_size: int = 4) -> DataLoader:
-    return DataLoader(get_dataset(), batch_size=batch_size)
+def get_dataloader(batch_size: int = 4, data_path: str = "/tmp/data") -> DataLoader:
+    return DataLoader(get_dataset(data_path), batch_size=batch_size)

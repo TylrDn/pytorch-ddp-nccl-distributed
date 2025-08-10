@@ -3,6 +3,7 @@ import os
 import signal
 import subprocess
 import sys
+import time
 
 import torch
 
@@ -18,16 +19,32 @@ def main() -> None:
     args = parse_args()
     n_gpus = torch.cuda.device_count()
     base_rank = int(os.environ.get("RANK", "0"))
-    world_size = int(os.environ.get("WORLD_SIZE", n_gpus))
-    processes = []
+    env_world_size = os.environ.get("WORLD_SIZE")
+    if n_gpus == 0 and env_world_size is None:
+        raise RuntimeError("No GPUs found and WORLD_SIZE not specified")
+    world_size = int(env_world_size) if env_world_size else n_gpus
+    processes: list[subprocess.Popen] = []
 
     def handle_sigterm(signum, frame):  # noqa: ARG001
+        timeout = 10
         for p in processes:
             p.send_signal(signum)
 
+        start = time.time()
+        while True:
+            alive = [p for p in processes if p.poll() is None]
+            if not alive or (time.time() - start) > timeout:
+                break
+            time.sleep(0.5)
+
+        for p in processes:
+            if p.poll() is None:
+                p.terminate()
+
     signal.signal(signal.SIGTERM, handle_sigterm)
 
-    for local_rank in range(n_gpus):
+    n_procs = n_gpus if n_gpus > 0 else world_size
+    for local_rank in range(n_procs):
         env = os.environ.copy()
         env.update(
             {
@@ -38,10 +55,15 @@ def main() -> None:
                 "MASTER_PORT": os.environ.get("MASTER_PORT", "29500"),
             }
         )
-        cmd = [sys.executable, args.script] + list(args.script_args)
-        processes.append(subprocess.Popen(cmd, env=env))
+        script_path = os.path.abspath(args.script)
+        if not os.path.exists(script_path):
+            raise FileNotFoundError(script_path)
+        cmd = [sys.executable, script_path] + list(args.script_args)
+        processes.append(subprocess.Popen(cmd, env=env, shell=False))
 
     codes = [p.wait() for p in processes]
+    for idx, code in enumerate(codes):
+        print(f"Process {idx} exited with code {code}")
     sys.exit(max(codes))
 
 
